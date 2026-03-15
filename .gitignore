@@ -29,6 +29,7 @@ media/
 
 # PyTorch / model artifacts
 *.pth
+!best_model\ \(1\).pth
 *.pt
 *.onnx
 
