@@ -1,72 +1,109 @@
 # Deep Fake
 # website Link:
 https://deepfake-3ux1.onrender.com/
+Deep Fake is a Django-based AI content detection studio for checking whether an image looks fake and whether an essay looks AI-generated.
 Real vs fake image detection using a custom CNN served with Django.
 
-## What This Project Does
-- Takes an image upload in the browser.
-- Preprocesses it to match training (32x32 RGB, scaled to [0,1]).
-- Runs the PyTorch CNN model on CPU.
-- Returns a verdict and a "looks fake" score (P(fake)).
-- Shows a live preview before submit, and shows the uploaded image in results.
-- Keeps uploads **in memory only** (no file/database storage).
+## What It Does
+- Image detector powered by a custom PyTorch CNN.
+- Text detector powered by a PyTorch RNN with TF-IDF features.
+- Shared website shell with a navbar and room for more detectors later.
+- Clean, responsive UI with live image preview and separate pages for each tool.
+- Volatile uploads only. Nothing is persisted after inference.
 
-## Project Structure
-- `deepfake_web/`: Django project settings and URL wiring.
-- `predictor/`: Django app with model + inference logic.
-- `templates/index.html`: UI.
-- `static/predictor/style.css`: Styling.
-- `best_model (1).pth`: PyTorch model weights (local only, not committed).
+## Website Structure
+- `Home` introduces the product and links to each detector.
+- `Image Check` accepts an image upload and returns a real/fake verdict.
+- `Text Check` accepts an essay and returns an AI/human-written verdict.
 
-## CNN Architecture
-Input: 3x32x32
+## Project Architecture
+- `deepfake_web/`
+  - Django project settings, URLs, and WSGI entry point.
+- `predictor/`
+  - Views, forms, and model-loading helpers.
+- `templates/`
+  - `base.html` shared shell.
+  - `home.html` landing page.
+  - `image_detector.html` image workflow.
+  - `text_detector.html` essay workflow.
+- `static/predictor/`
+  - CSS for the entire site.
 
+## Model Architecture
+
+### Image Model
+Input: `3 x 32 x 32`
+
+```text
+Conv2d(3 -> 32, kernel=3, padding=1)
+ReLU
+MaxPool2d(2)
+
+Conv2d(32 -> 64, kernel=3, padding=1)
+ReLU
+MaxPool2d(2)
+
+Conv2d(64 -> 128, kernel=3, padding=1)
+ReLU
+MaxPool2d(2)
+
+Flatten
+Linear(2048 -> 256)
+ReLU
+Linear(256 -> 1)
+Sigmoid
 ```
-Conv2d(3, 32, 3x3, padding=1) -> ReLU -> MaxPool(2x2)
-Conv2d(32, 64, 3x3, padding=1) -> ReLU -> MaxPool(2x2)
-Conv2d(64, 128, 3x3, padding=1) -> ReLU -> MaxPool(2x2)
-Flatten (4*4*128 = 2048)
-Linear(2048 -> 256) -> ReLU
-Linear(256 -> 1) -> Sigmoid
+
+### Text Model
+Input: TF-IDF features with `max_features=5000`
+
+```text
+TF-IDF vectorizer
+RNN(input_size=5000, hidden_size=128)
+Linear(128 -> 1)
+Sigmoid
 ```
 
-Output is a single sigmoid probability: **P(fake)**.
+## Inference Flow
+1. User opens the relevant page from the navbar.
+2. Django receives the image or text input.
+3. The input is normalized to match training.
+4. The model runs in evaluation mode with `torch.no_grad()`.
+5. The app returns a human-readable verdict and a score.
 
-## Inference Workflow
-1. User uploads image from the UI.
-2. Django reads file bytes into memory (no disk write).
-3. PIL opens image and converts to RGB.
-4. Image is resized to 32x32, scaled to [0,1].
-5. Tensor shape becomes `[1, 3, 32, 32]`.
-6. Model runs in `eval()` with `torch.no_grad()`.
-7. Output is interpreted as:
-   - P(fake) >= 0.5 → "This image is probably fake."
-   - P(fake) < 0.5 → "This image is probably real."
-
-## Setup
-### 1) Create/activate venv
-This project expects a venv at:
+## Local Setup
+### 1) Activate the virtual environment
+The project expects the venv at:
 `/Users/aayannoori/Desktop/django/.venv`
 
 ### 2) Install dependencies
-```
-/Users/aayannoori/Desktop/django/.venv/bin/python -m pip install torch django pillow psycopg[binary]
+```bash
+/Users/aayannoori/Desktop/django/.venv/bin/python -m pip install -r requirements.txt
 ```
 
-### 3) Run server
-```
+### 3) Run the server
+```bash
 /Users/aayannoori/Desktop/django/.venv/bin/python manage.py runserver
 ```
 
-Open: `http://127.0.0.1:8000/`
+Open:
+`http://127.0.0.1:8000/`
 
-## Database
-PostgreSQL is configured by default with auto-fallback to SQLite if Postgres is unavailable.
+## Deployment Notes
+- Gunicorn is the production server.
+- WhiteNoise serves static files.
+- PostgreSQL is preferred, with SQLite fallback if Postgres is unavailable.
 
-Edit database settings in:
-`deepfake_web/settings.py`
+## Important Files
+- [`predictor/services.py`](/Users/aayannoori/Desktop/django/DeepFake/predictor/services.py)
+- [`predictor/views.py`](/Users/aayannoori/Desktop/django/DeepFake/predictor/views.py)
+- [`templates/base.html`](/Users/aayannoori/Desktop/django/DeepFake/templates/base.html)
+- [`templates/image_detector.html`](/Users/aayannoori/Desktop/django/DeepFake/templates/image_detector.html)
+- [`templates/text_detector.html`](/Users/aayannoori/Desktop/django/DeepFake/templates/text_detector.html)
 
-## Notes
-- If you used normalization during training, add the same normalization in
-  `predictor/views.py` inside `_preprocess_image`.
-- The model file is excluded from git by default.
+## Missing Text Artifact
+The essay detector also expects:
+- `best_rnn_weights.pth`
+- `tfidf_vectorizer.pkl`
+
+The weights file is already in the repo. If the vectorizer is not present yet, the page still renders and shows a setup hint instead of crashing.

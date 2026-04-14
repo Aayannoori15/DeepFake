@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Deep Fake | Image Check{% endblock %}
+
+{% block content %}
+<section class="tool-layout">
+  <div class="tool-copy">
+    <span class="eyebrow">Image detector</span>
+    <h1>Check whether an image looks real or fake.</h1>
+    <p>
+      Upload an image and the CNN will score how likely it is fake. The preview
+      stays local and nothing is stored after prediction.
+    </p>
+  </div>
+
+  <div class="tool-card">
+    <form class="upload-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <label class="file-drop">
+        <input id="imageInput" type="file" name="image" accept="image/*" required />
+        <span>Drop an image or click to browse</span>
+      </label>
+      <div class="preview pre-submit" id="previewBox">
+        <img id="previewImg" alt="Selected preview" />
+      </div>
+      <button class="btn btn-primary btn-full" type="submit">Analyze Image</button>
+    </form>
+
+    {% if error %}
+      <div class="alert alert-error">{{ error }}</div>
+    {% elif result %}
+      <div class="result-grid">
+        <div>
+          <h2>{{ result }}</h2>
+          <p>Looks fake by: <strong>{{ probability_pct|floatformat:2 }}%</strong></p>
+        </div>
+        {% if image_url %}
+          <div class="preview">
+            <img src="{{ image_url }}" alt="Uploaded preview" />
+          </div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="hint">
+        The model expects 32x32 RGB images.
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<script>
+  const input = document.getElementById("imageInput");
+  const previewBox = document.getElementById("previewBox");
+  const previewImg = document.getElementById("previewImg");
+
+  input?.addEventListener("change", (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      previewBox.classList.remove("show");
+      previewImg.removeAttribute("src");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      previewImg.src = reader.result;
+      previewBox.classList.add("show");
+    };
+    reader.readAsDataURL(file);
+  });
+</script>
+{% endblock %}

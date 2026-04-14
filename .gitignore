@@ -30,6 +30,7 @@ media/
 # PyTorch / model artifacts
 *.pth
 !best_model\ \(1\).pth
+!best_rnn_weights.pth
 *.pt
 *.onnx
 

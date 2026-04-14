@@ -1,100 +1,126 @@
-from pathlib import Path
+from io import BytesIO
 
-import base64
-import io
-import numpy as np
 import torch
 from django.shortcuts import render
 from PIL import Image
-from torch import nn
 
-from .forms import ImageUploadForm
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-MODEL_PATH = BASE_DIR / "best_model (1).pth"
-
-
-class CNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv_layers = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-        )
-        self.fc_layers = nn.Sequential(
-            nn.Linear(4 * 4 * 128, 256),
-            nn.ReLU(),
-            nn.Linear(256, 1),
-            nn.Sigmoid(),
-        )
-
-    def forward(self, x):
-        x = self.conv_layers(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc_layers(x)
-        return x
+from .forms import ImageUploadForm, TextAnalysisForm
+from .services import (
+    get_image_model,
+    get_text_assets,
+    image_preview_data_url,
+    preprocess_image,
+    preprocess_text,
+    text_assets_ready,
+)
 
 
-def _load_model():
-    model = CNN()
-    state = torch.load(MODEL_PATH, map_location="cpu")
-    if isinstance(state, dict) and "state_dict" in state:
-        state = state["state_dict"]
-    model.load_state_dict(state)
-    model.eval()
-    return model
+def home(request):
+    return render(
+        request,
+        "home.html",
+        {
+            "image_active": False,
+            "text_active": False,
+        },
+    )
 
 
-MODEL = _load_model()
-
-
-def _preprocess_image(image: Image.Image) -> torch.Tensor:
-    image = image.convert("RGB").resize((32, 32))
-    array = np.array(image).astype("float32") / 255.0
-    array = np.transpose(array, (2, 0, 1))
-    tensor = torch.from_numpy(array).unsqueeze(0)
-    return tensor
-
-
-def index(request):
+def image_detector(request):
     result = None
-    probability = None
     probability_pct = None
-    image_data_url = None
+    image_url = None
+    error = None
 
     if request.method == "POST":
         form = ImageUploadForm(request.POST, request.FILES)
         if form.is_valid():
             image_file = form.cleaned_data["image"]
             image_bytes = image_file.read()
-            image = Image.open(io.BytesIO(image_bytes))
-            tensor = _preprocess_image(image)
-            with torch.no_grad():
-                output = MODEL(tensor)
-            probability = float(output.item())
-            probability_pct = round(probability * 100, 2)
-            result = (
-                "This image is probably fake."
-                if probability >= 0.5
-                else "This image is probably real."
-            )
-            encoded = base64.b64encode(image_bytes).decode("ascii")
-            image_data_url = f"data:{image_file.content_type};base64,{encoded}"
+            image = Image.open(BytesIO(image_bytes))
+            tensor = preprocess_image(image)
+
+            try:
+                model = get_image_model()
+                with torch.no_grad():
+                    output = model(tensor)
+                probability = float(output.item())
+                probability_pct = round(probability * 100, 2)
+                # Assumes the positive class in training maps to "fake".
+                result = (
+                    "This image is probably fake."
+                    if probability >= 0.5
+                    else "This image is probably real."
+                )
+                image_url = image_preview_data_url(image_bytes, image_file.content_type)
+            except Exception as exc:
+                error = str(exc)
     else:
         form = ImageUploadForm()
 
-    context = {
-        "form": form,
-        "result": result,
-        "probability": probability,
-        "probability_pct": probability_pct,
-        "image_url": image_data_url,
-    }
-    return render(request, "index.html", context)
+    return render(
+        request,
+        "image_detector.html",
+        {
+            "form": form,
+            "result": result,
+            "probability_pct": probability_pct,
+            "image_url": image_url,
+            "error": error,
+            "image_active": True,
+            "text_active": False,
+        },
+    )
+
+
+def text_detector(request):
+    result = None
+    probability_pct = None
+    cleaned_text = None
+    error = None
+    model_ready = text_assets_ready()
+
+    if request.method == "POST":
+        form = TextAnalysisForm(request.POST)
+        if form.is_valid():
+            raw_text = form.cleaned_data["text"]
+            cleaned_text = preprocess_text(raw_text)
+
+            try:
+                model, vectorizer = get_text_assets()
+                features = vectorizer.transform([cleaned_text]).toarray()
+                tensor = torch.from_numpy(features).float().unsqueeze(1)
+
+                with torch.no_grad():
+                    output = model(tensor)
+
+                probability = float(torch.sigmoid(output).item())
+                probability_pct = round(probability * 100, 2)
+                # Flip these labels if your training target encoding was reversed.
+                result = (
+                    "This essay looks AI-generated."
+                    if probability >= 0.5
+                    else "This essay looks human-written."
+                )
+            except FileNotFoundError as exc:
+                model_ready = False
+                error = str(exc)
+            except Exception as exc:
+                error = str(exc)
+    else:
+        form = TextAnalysisForm()
+
+    return render(
+        request,
+        "text_detector.html",
+        {
+            "form": form,
+            "result": result,
+            "probability_pct": probability_pct,
+            "cleaned_text": cleaned_text,
+            "error": error,
+            "model_ready": model_ready,
+            "image_active": False,
+            "text_active": True,
+        },
+    )

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Deep Fake | AI Content Detector{% endblock %}
+
+{% block content %}
+<section class="hero-grid">
+  <div class="hero-copy">
+    <span class="eyebrow">AI Content Detection Studio</span>
+    <h1>One website. Multiple detectors. Built to grow.</h1>
+    <p>
+      Check whether an image looks fake or whether an essay looks AI-generated,
+      with a clean workflow that can expand into more detectors later.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="{% url 'image_detector' %}">Check Image</a>
+      <a class="btn btn-secondary" href="{% url 'text_detector' %}">Check Text</a>
+    </div>
+  </div>
+
+  <div class="hero-panel">
+    <div class="stat-card">
+      <strong>2</strong>
+      <span>current detectors</span>
+    </div>
+    <div class="stat-card">
+      <strong>1</strong>
+      <span>shared interface</span>
+    </div>
+    <div class="stat-card">
+      <strong>Future-ready</strong>
+      <span>easy to extend with audio, video, or document tools</span>
+    </div>
+  </div>
+</section>
+
+<section class="feature-grid">
+  <article class="feature-card">
+    <span class="feature-tag">Image</span>
+    <h2>Real vs Fake Image Check</h2>
+    <p>
+      Upload an image, run the CNN, and get a quick verdict with instant preview.
+    </p>
+  </article>
+  <article class="feature-card">
+    <span class="feature-tag">Text</span>
+    <h2>AI Essay Detection</h2>
+    <p>
+      Paste an essay and score how likely it was written by AI using the RNN model.
+    </p>
+  </article>
+  <article class="feature-card">
+    <span class="feature-tag">Scalable</span>
+    <h2>Built for more detectors later</h2>
+    <p>
+      The layout already supports future additions like audio, video, or plagiarism tools.
+    </p>
+  </article>
+</section>
+
+<section class="workflow">
+  <div class="section-heading">
+    <span class="eyebrow">Workflow</span>
+    <h2>How it works</h2>
+  </div>
+  <div class="workflow-steps">
+    <div class="workflow-step">
+      <span>01</span>
+      <p>User chooses a detector from the navbar.</p>
+    </div>
+    <div class="workflow-step">
+      <span>02</span>
+      <p>Django preprocesses the input to match the training pipeline.</p>
+    </div>
+    <div class="workflow-step">
+      <span>03</span>
+      <p>The trained model returns a score and a human-readable verdict.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}
