@@ -94,6 +94,21 @@ Open:
 - WhiteNoise serves static files.
 - PostgreSQL is preferred, with SQLite fallback if Postgres is unavailable.
 
+## Deploying on Render
+
+- Store secrets (API keys) in Render's Environment Variables dashboard — do NOT
+  commit them to the repository or store them in a checked-in `.env` file.
+- Recommended variable names:
+  - `GROQ_API_KEY` — your Groq/OpenAI-style API key used by the agent.
+  - Any additional provider keys required by tools you enable.
+- After adding environment variables in Render, trigger a deploy or restart the
+  service so the new variables take effect.
+
+For local development, keep secrets in a local `.env` file and make sure
+`.env` is included in `.gitignore` (it already is in this repo). The application
+loads local variables via `python-dotenv` during development, while production
+reads from the environment.
+
 ## Important Files
 - [`predictor/services.py`](/Users/aayannoori/Desktop/django/DeepFake/predictor/services.py)
 - [`predictor/views.py`](/Users/aayannoori/Desktop/django/DeepFake/predictor/views.py)
