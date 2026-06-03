@@ -5,14 +5,16 @@
 <section class="hero-grid">
   <div class="hero-copy">
     <span class="eyebrow">AI Content Detection Studio</span>
-    <h1>One website. Multiple detectors. Built to grow.</h1>
+    <h1>Detect fake visuals, machine-written text, and copied content with confidence.</h1>
     <p>
-      Check whether an image looks fake or whether an essay looks AI-generated,
-      with a clean workflow that can expand into more detectors later.
+      Explore the site’s image and text detectors, plus a plagiarism agent. The
+      app is designed for quick checks and transparent warnings, not as a final
+      forensic verdict.
     </p>
     <div class="hero-actions">
       <a class="btn btn-primary" href="{% url 'image_detector' %}">Check Image</a>
       <a class="btn btn-secondary" href="{% url 'text_detector' %}">Check Text</a>
+      <a class="btn btn-secondary" href="{% url 'Plagirism_report' %}">Check Plagiarism</a>
     </div>
   </div>
 
@@ -48,10 +50,26 @@
     </p>
   </article>
   <article class="feature-card">
-    <span class="feature-tag">Scalable</span>
-    <h2>Built for more detectors later</h2>
+    <span class="feature-tag">Image</span>
+    <h2>Small portrait-trained image model</h2>
     <p>
-      The layout already supports future additions like audio, video, or plagiarism tools.
+      The image detector is trained on a small portrait dataset and may be inaccurate
+      on non-portrait or complex photos.
+    </p>
+  </article>
+  <article class="feature-card">
+    <span class="feature-tag">Text</span>
+    <h2>TF-IDF text classification</h2>
+    <p>
+      The essay detector uses TF-IDF embeddings, which lose sequence information and
+      can reduce accuracy on nuanced writing.
+    </p>
+  </article>
+  <article class="feature-card">
+    <span class="feature-tag">Search</span>
+    <h2>DuckDuckGo-powered plagiarism agent</h2>
+    <p>
+      The agent uses DuckDuckGo for web search, so source matching is useful but not exhaustive.
     </p>
   </article>
 </section>

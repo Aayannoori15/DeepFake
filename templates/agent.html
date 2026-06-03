@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Deep Fake | Plagiarism Check{% endblock %}
+
+{% block content %}
+<section class="tool-layout">
+  <div class="tool-copy">
+    <span class="eyebrow">Plagiarism inspector</span>
+    <h1>Analyze text for plagiarism and source matching.</h1>
+    <p>
+      Paste the passage you want to check, and the agent will search for similar or
+      exact matches online. The page returns a confidence score and source details.
+    </p>
+  </div>
+
+  <div class="tool-card">
+    <form class="upload-form" method="post">
+      {% csrf_token %}
+      {{ form.text.label_tag }}
+      {{ form.text }}
+      {% if form.text.errors %}
+        <div class="alert alert-warning">{{ form.text.errors.as_text }}</div>
+      {% endif %}
+      <button class="btn btn-primary btn-full" type="submit">Run Plagiarism Check</button>
+    </form>
+
+    {% if error %}
+      <div class="alert alert-warning">{{ error }}</div>
+    {% elif result %}
+      <div class="result-grid">
+        <div>
+          <h2>{{ result.summary }}</h2>
+          <p>Confidence: <strong>{{ result.confidence }}%</strong></p>
+        </div>
+      </div>
+
+      {% if result.sources %}
+        <div class="source-list">
+          <h3>Potential sources</h3>
+          <ul>
+            {% for source in result.sources %}
+              <li>
+                <a href="{{ source.url }}" target="_blank" rel="noreferrer">{{ source.title or source.url }}</a>
+                <p>{{ source.snippet }}</p>
+                <span>{{ source.match_score }}% match</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="hint">
+        Paste text and submit to start the plagiarism agent.
+      </div>
+    {% endif %}
+    <div class="alert alert-info">
+      Note: this agent uses DuckDuckGo search results, so it may miss sources and is not a perfect plagiarism proof.
+    </div>
+  </div>
+</section>
+{% endblock %}

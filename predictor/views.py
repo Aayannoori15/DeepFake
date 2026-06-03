@@ -3,8 +3,8 @@ from io import BytesIO
 import torch
 from django.shortcuts import render
 from PIL import Image
-
-from .forms import ImageUploadForm, TextAnalysisForm
+from .Agent import *
+from .forms import *
 from .services import (
     get_image_model,
     get_text_assets,
@@ -124,3 +124,38 @@ def text_detector(request):
             "text_active": True,
         },
     )
+
+def Plagirism_report(request):
+    user_input = None
+    result = None
+    error = None
+    form = PlagirismAgent(request.POST or None)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            user_input = form.cleaned_data["text"]
+            try:
+                groq_agent = build_agent()
+                agent_output = groq_agent.run(user_input)
+                result = {
+                    "summary": agent_output,
+                    "confidence": 100,
+                    "sources": [],
+                }
+            except Exception as exc:
+                error = str(exc)
+        else:
+            error = "Invalid input. Please enter text to analyze."
+
+    return render(
+        request,
+        'agent.html',
+        {
+            'form': form,
+            'result': result,
+            'error': error,
+            'user_input': user_input,
+        },
+    )
+        
+    

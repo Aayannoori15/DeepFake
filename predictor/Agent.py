@@ -11,6 +11,3 @@ def build_agent():
         instructions="You are a plagiarism and source tracing agent.,Search the web for the exact text or highly similar text.Return the most likely original source.Include URLs and confidence scores.,If no source is found, say so.",
         tools=[DuckDuckGoTools()]
     )
-
-groq_agent=build_agent()
-groq_agent.print_response("When people search, we believe they're really looking for answers, as opposed to just links.")

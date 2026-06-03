@@ -49,6 +49,10 @@
         alongside <code>best_rnn_weights.pth</code> to enable predictions.
       </div>
     {% endif %}
+    <div class="alert alert-info">
+      Warning: this classifier uses TF-IDF embeddings, which discard the order of words.
+      That can lower accuracy on complex essays where sequence matters.
+    </div>
   </div>
 </section>
 {% endblock %}
