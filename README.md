@@ -109,6 +109,23 @@ For local development, keep secrets in a local `.env` file and make sure
 loads local variables via `python-dotenv` during development, while production
 reads from the environment.
 
+## Memory Optimization for Render
+
+This app uses PyTorch models and an LLM agent, which can consume significant memory.
+If you see `Worker exiting (pid:...) was sent SIGKILL! Perhaps out of memory?`:
+
+**Settings already optimized:**
+- `DEBUG = False` in production (environment-based).
+- Gunicorn configured with 1 worker (not 3+) and periodic restarts.
+- Image/text models cached with `@lru_cache` to avoid reloading.
+- Input size validation to prevent huge payloads.
+
+**If still hitting memory limits on Render:**
+1. Upgrade to a larger plan (Standard has more memory than Starter/Free).
+2. Reduce the number of concurrent requests (Render Free tier may support only 1-2).
+3. Consider lazy-loading models only on first use per request (tradeoff: slower first response).
+4. Reduce `max_tokens` or increase timeouts in the agent if queries are slow.
+
 ## Important Files
 - [`predictor/services.py`](/Users/aayannoori/Desktop/django/DeepFake/predictor/services.py)
 - [`predictor/views.py`](/Users/aayannoori/Desktop/django/DeepFake/predictor/views.py)

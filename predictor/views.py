@@ -134,16 +134,19 @@ def Plagirism_report(request):
     if request.method == 'POST':
         if form.is_valid():
             user_input = form.cleaned_data["text"]
-            try:
-                groq_agent = build_agent()
-                agent_output = groq_agent.run(user_input)
-                result = {
-                    "summary": agent_output,
-                    "confidence": 100,
-                    "sources": [],
-                }
-            except Exception as exc:
-                error = str(exc)
+            if len(user_input.strip()) < 10:
+                error = "Please enter at least 10 characters."
+            else:
+                try:
+                    groq_agent = build_agent()
+                    agent_output = groq_agent.run(user_input)
+                    result = {
+                        "summary": agent_output,
+                        "confidence": 100,
+                        "sources": [],
+                    }
+                except Exception as exc:
+                    error = str(exc)
         else:
             error = "Invalid input. Please enter text to analyze."
 

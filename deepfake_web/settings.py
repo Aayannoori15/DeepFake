@@ -16,6 +16,9 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Memory optimization for constrained environments
+MAX_CONTENT_LENGTH = 5242880  # 5MB max upload size
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -24,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-75^=7jbiwbz$suf6qp0m=n=ua!wxv0pkowa!lmdo$4owii58f6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False').lower() in {'1', 'true', 'yes'}
 
 ALLOWED_HOSTS = ['deepfake-3ux1.onrender.com']
 
