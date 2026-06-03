@@ -3,7 +3,6 @@ from io import BytesIO
 import torch
 from django.shortcuts import render
 from PIL import Image
-from .Agent import *
 from .forms import *
 from .services import (
     get_image_model,
@@ -138,6 +137,8 @@ def Plagirism_report(request):
                 error = "Please enter at least 10 characters."
             else:
                 try:
+                    # Import agent only on-demand (not at startup)
+                    from .Agent import build_agent
                     groq_agent = build_agent()
                     agent_output = groq_agent.run(user_input)
                     result = {
@@ -145,6 +146,8 @@ def Plagirism_report(request):
                         "confidence": 100,
                         "sources": [],
                     }
+                except ImportError:
+                    error = "Agent not available. Check installation."
                 except Exception as exc:
                     error = str(exc)
         else:
