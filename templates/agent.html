@@ -39,7 +39,7 @@
           <ul>
             {% for source in result.sources %}
               <li>
-                <a href="{{ source.url }}" target="_blank" rel="noreferrer">{{ source.title or source.url }}</a>
+                <a href="{{ source.url }}" target="_blank" rel="noreferrer">{{ source.title|default:source.url }}</a>
                 <p>{{ source.snippet }}</p>
                 <span>{{ source.match_score }}% match</span>
               </li>

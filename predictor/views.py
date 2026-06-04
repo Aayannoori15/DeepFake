@@ -12,8 +12,7 @@ from .services import (
     preprocess_text,
     text_assets_ready,
 )
-from dotenv import load_dotenv
-load_dotenv()
+
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
@@ -194,7 +193,7 @@ def Factchecker(request):
                     client = Groq(api_key=GROQ_API_KEY)
 
                     completion = client.chat.completions.create(
-                        model="openai/gpt-oss-120b",
+                        model="llama-3.3-70b-versatile",
                         messages=[
                             {
                                 "role": "user",
