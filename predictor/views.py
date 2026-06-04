@@ -1,7 +1,7 @@
 from io import BytesIO
-
+from groq import Groq
 import torch
-from django.shortcuts import render
+from django.shortcuts import render,redirect 
 from PIL import Image
 from .forms import *
 from .services import (
@@ -12,7 +12,8 @@ from .services import (
     preprocess_text,
     text_assets_ready,
 )
-
+from dotenv import load_dotenv
+load_dotenv()
 
 def home(request):
     return render(
@@ -164,4 +165,35 @@ def Plagirism_report(request):
         },
     )
         
-    
+def Factchecker(request):
+    user_input=None 
+    LLM_output=None 
+    form = Factcheckerform(request.POST or None)
+    if request.method == 'POST':
+        if form.is_valid():
+            user_input = form.cleaned_data["text"]
+            if len(user_input.strip()) < 10:
+                    error = "Please enter at least 10 characters."
+                    return redirect(request,'fact_check.html',{'error':error})
+            else:
+                client = Groq(api_key=GROQ_API_KEY)
+                completion = client.chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=[
+                {
+                    "role": "user",
+                    "content": f'do a fact check for this input :{user_input}'
+
+                }
+                ],
+                temperature=1,
+                max_completion_tokens=8192,
+                top_p=1,
+                reasoning_effort="medium",
+                stop=None
+                )
+                result=completion.choices[0].message.content
+                return render (request,'fact_check.html',{'result':result})
+    else: 
+        return render(request,'fact_check.html')
+

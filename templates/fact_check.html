@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Deep Fake | Fact Check{% endblock %}
+
+{% block content %}
+<section class="tool-layout">
+  <div class="tool-copy">
+    <span class="eyebrow">Fact checking</span>
+    <h1>Verify claims with the Groq fact-checking agent.</h1>
+    <p>
+      Paste a statement, paragraph, or claim and get a low-temperature fact-check summary with
+      source guidance and confidence hints.
+    </p>
+    <p class="hint">
+      This page is a user interface scaffold for the fact-checking feature. The backend action will be added separately.
+    </p>
+  </div>
+
+  <div class="tool-card">
+    <form class="upload-form" method="post">
+      {% csrf_token %}
+      {{ form.text.label_tag }}
+      {{ form.text }}
+      {% if form.text.errors %}
+        <div class="alert alert-warning">{{ form.text.errors.as_text }}</div>
+      {% endif %}
+      <button class="btn btn-primary btn-full" type="submit">Run Fact Check</button>
+      <p class="hint">Enter at least 10 characters for a valid fact-check request.</p>
+    </form>
+
+    {% if error %}
+      <div class="alert alert-warning">{{ error }}</div>
+    {% elif result %}
+      <div class="result-grid">
+        <div>
+          <h2>{{ result.summary }}</h2>
+          <p>Confidence: <strong>{{ result.confidence }}%</strong></p>
+        </div>
+      </div>
+      {% if result.sources %}
+        <div class="source-list">
+          <h3>Supporting sources</h3>
+          <ul>
+            {% for source in result.sources %}
+              <li>
+                <a href="{{ source.url }}" target="_blank" rel="noreferrer">{{ source.title or source.url }}</a>
+                <p>{{ source.snippet }}</p>
+                <span>{{ source.match_score }}% match</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="hint">Enter a claim to check and submit to begin the fact check.</div>
+    {% endif %}
+
+    <div class="alert alert-info">
+      This fact-checker uses a low-temperature Groq agent for conservative, precise reasoning.
+    </div>
+  </div>
+</section>
+{% endblock %}

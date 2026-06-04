@@ -7,13 +7,14 @@
     <span class="eyebrow">AI Content Detection Studio</span>
     <h1>Detect fake visuals, machine-written text, and copied content with confidence.</h1>
     <p>
-      Explore the site’s image and text detectors, plus a plagiarism agent. The
-      app is designed for quick checks and transparent warnings, not as a final
-      forensic verdict.
+      Explore the site’s image and text detectors, plus a fact-checking tool and
+      a plagiarism agent. The app is designed for quick checks and transparent
+      warnings, not as a final forensic verdict.
     </p>
     <div class="hero-actions">
       <a class="btn btn-primary" href="{% url 'image_detector' %}">Check Image</a>
       <a class="btn btn-secondary" href="{% url 'text_detector' %}">Check Text</a>
+      <a class="btn btn-secondary" href="/fact-check/">Fact Check</a>
       <a class="btn btn-secondary" href="{% url 'Plagirism_report' %}">Check Plagiarism</a>
     </div>
   </div>
@@ -76,6 +77,13 @@
     <h2>DuckDuckGo-powered plagiarism agent</h2>
     <p>
       The agent uses DuckDuckGo for web search, so source matching is useful but not exhaustive.
+    </p>
+  </article>
+  <article class="feature-card">
+    <span class="feature-tag">Fact Check</span>
+    <h2>Groq-backed factual verification</h2>
+    <p>
+      Use the low-temperature fact-checker to evaluate statements and claims with a conservative, source-focused agent.
     </p>
   </article>
 </section>

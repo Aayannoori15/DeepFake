@@ -27,6 +27,7 @@
               <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
               <a href="{% url 'image_detector' %}" class="{% if image_active %}active{% endif %}">Image Check</a>
               <a href="{% url 'text_detector' %}" class="{% if text_active %}active{% endif %}">Text Check</a>
+              <a href="/fact-check/" class="{% if request.path == '/fact-check/' %}active{% endif %}">Fact Check</a>
               <a href="{% url 'Plagirism_report' %}" class="{% if request.resolver_match.url_name == 'Plagirism_report' %}active{% endif %}">Plagiarism</a>
             </div>
           </div>
