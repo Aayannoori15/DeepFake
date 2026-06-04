@@ -1,6 +1,5 @@
 from io import BytesIO
 import os
-import torch
 from django.shortcuts import render
 from PIL import Image
 from .forms import *
@@ -42,6 +41,7 @@ def image_detector(request):
             tensor = preprocess_image(image)
 
             try:
+                import torch
                 model = get_image_model()
                 with torch.no_grad():
                     output = model(tensor)
@@ -88,6 +88,7 @@ def text_detector(request):
             cleaned_text = preprocess_text(raw_text)
 
             try:
+                import torch
                 model, vectorizer = get_text_assets()
                 features = vectorizer.transform([cleaned_text]).toarray()
                 tensor = torch.from_numpy(features).float().unsqueeze(1)

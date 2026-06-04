@@ -8,10 +8,8 @@ from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
-import torch
 from PIL import Image
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-from torch import nn
 
 try:
     from nltk.stem import PorterStemmer
@@ -27,49 +25,37 @@ STOPWORDS = set(ENGLISH_STOP_WORDS)
 STEMMER = PorterStemmer() if PorterStemmer else None
 
 
-class ImageCNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv_layers = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-        )
-        self.fc_layers = nn.Sequential(
-            nn.Linear(4 * 4 * 128, 256),
-            nn.ReLU(),
-            nn.Linear(256, 1),
-            nn.Sigmoid(),
-        )
-
-    def forward(self, x):
-        x = self.conv_layers(x)
-        x = x.view(x.size(0), -1)
-        return self.fc_layers(x)
-
-
-class EssayRNN(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int = 128, num_layers: int = 1):
-        super().__init__()
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.rnn = nn.RNN(input_size, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, 1)
-
-    def forward(self, x):
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size, device=x.device)
-        out, _ = self.rnn(x, h0)
-        return self.fc(out[:, -1, :])
-
-
 @lru_cache(maxsize=1)
-def get_image_model() -> ImageCNN:
+def get_image_model() -> object:
+    import torch
+    from torch import nn
+
+    class ImageCNN(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.conv_layers = nn.Sequential(
+                nn.Conv2d(3, 32, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(32, 64, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(64, 128, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+            )
+            self.fc_layers = nn.Sequential(
+                nn.Linear(4 * 4 * 128, 256),
+                nn.ReLU(),
+                nn.Linear(256, 1),
+                nn.Sigmoid(),
+            )
+
+        def forward(self, x):
+            x = self.conv_layers(x)
+            x = x.view(x.size(0), -1)
+            return self.fc_layers(x)
+
     if not IMAGE_MODEL_PATH.exists():
         raise FileNotFoundError(f"Missing image weights: {IMAGE_MODEL_PATH}")
 
@@ -83,13 +69,29 @@ def get_image_model() -> ImageCNN:
 
 
 @lru_cache(maxsize=1)
-def get_text_assets() -> tuple[EssayRNN, object]:
+def get_text_assets() -> tuple[object, object]:
     if not TEXT_MODEL_PATH.exists():
         raise FileNotFoundError(f"Missing text weights: {TEXT_MODEL_PATH}")
     if not TEXT_VECTORIZER_PATH.exists():
         raise FileNotFoundError(
             "Missing text vectorizer. Add tfidf_vectorizer.pkl to enable essay predictions."
         )
+
+    import torch
+    from torch import nn
+
+    class EssayRNN(nn.Module):
+        def __init__(self, input_size: int, hidden_size: int = 128, num_layers: int = 1):
+            super().__init__()
+            self.hidden_size = hidden_size
+            self.num_layers = num_layers
+            self.rnn = nn.RNN(input_size, hidden_size, num_layers, batch_first=True)
+            self.fc = nn.Linear(hidden_size, 1)
+
+        def forward(self, x):
+            h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size, device=x.device)
+            out, _ = self.rnn(x, h0)
+            return self.fc(out[:, -1, :])
 
     with open(TEXT_VECTORIZER_PATH, "rb") as handle:
         vectorizer = pickle.load(handle)
@@ -108,7 +110,8 @@ def text_assets_ready() -> bool:
     return TEXT_MODEL_PATH.exists() and TEXT_VECTORIZER_PATH.exists()
 
 
-def preprocess_image(image: Image.Image) -> torch.Tensor:
+def preprocess_image(image: Image.Image) -> object:
+    import torch
     image = image.convert("RGB").resize((32, 32))
     array = np.array(image).astype("float32") / 255.0
     array = np.transpose(array, (2, 0, 1))
