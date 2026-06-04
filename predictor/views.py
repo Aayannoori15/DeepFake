@@ -195,8 +195,6 @@ def Factchecker(request):
                         temperature=0.02,
                         max_completion_tokens=8192,
                         top_p=1,
-                        reasoning_effort="medium",
-                        stop=None,
                     )
                     llm_output = completion.choices[0].message.content
                     result = {
@@ -205,9 +203,11 @@ def Factchecker(request):
                         "sources": [],
                     }
                 except Exception as exc:
-                    error = str(exc)
+                    error = f"Fact-check failed: {str(exc)}"
         else:
             error = "Invalid input. Please enter text to analyze."
+    else:
+        form = Factcheckerform()
 
     return render(
         request,
