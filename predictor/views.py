@@ -168,55 +168,54 @@ def Plagirism_report(request):
         },
     )
         
+
+
+
 def Factchecker(request):
     user_input = None
     result = None
     error = None
+
     form = Factcheckerform(request.POST or None)
 
     if request.method == 'POST':
         if form.is_valid():
             user_input = form.cleaned_data["text"]
+
             if len(user_input.strip()) < 10:
                 error = "Please enter at least 10 characters."
+
             elif not GROQ_API_KEY:
                 error = "Groq API key not configured."
+
             else:
                 try:
                     client = Groq(api_key=GROQ_API_KEY)
+
                     completion = client.chat.completions.create(
-                        model="openai/gpt-oss-120b",
+                        model="llama-3.3-70b-versatile",
                         messages=[
                             {
                                 "role": "user",
-                                "content": f"Please fact-check the following statement:\n\n{user_input}",
+                                "content": f"Fact-check this statement:\n{user_input}"
                             }
                         ],
-                        temperature=0.02,
-                        max_completion_tokens=8192,
-                        top_p=1,
+                        temperature=0.2,
+                        max_completion_tokens=1024,
                     )
-                    llm_output = completion.choices[0].message.content
-                    result = {
-                        "summary": llm_output,
-                        "confidence": 100,
-                        "sources": [],
-                    }
-                except Exception as exc:
-                    error = f"Fact-check failed: {str(exc)}"
-        else:
-            error = "Invalid input. Please enter text to analyze."
-    else:
-        form = Factcheckerform()
 
-    return render(
-        request,
-        'fact_check.html',
-        {
-            'form': form,
-            'result': result,
-            'error': error,
-            'user_input': user_input,
-        },
-    )
+                    result = completion.choices[0].message.content
+
+                except Exception as exc:
+                    error = str(exc)
+
+        else:
+            error = "Invalid input."
+
+    return render(request, 'fact_check.html', {
+        "form": form,
+        "result": result,
+        "error": error,
+        "user_input": user_input,
+    })
 
