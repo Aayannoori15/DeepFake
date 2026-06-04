@@ -1,6 +1,5 @@
 from io import BytesIO
 import os
-from groq import Groq
 import torch
 from django.shortcuts import render
 from PIL import Image
@@ -190,10 +189,12 @@ def Factchecker(request):
 
             else:
                 try:
+                    from groq import Groq
+
                     client = Groq(api_key=GROQ_API_KEY)
 
                     completion = client.chat.completions.create(
-                        model="llama-3.3-70b-versatile",
+                        model="openai/gpt-oss-120b",
                         messages=[
                             {
                                 "role": "user",
@@ -211,6 +212,8 @@ def Factchecker(request):
                         "sources": [],
                     }
 
+                except ImportError:
+                    error = "Groq package is not installed in the runtime environment."
                 except Exception as exc:
                     error = str(exc)
 
