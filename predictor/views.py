@@ -204,7 +204,12 @@ def Factchecker(request):
                         max_completion_tokens=1024,
                     )
 
-                    result = completion.choices[0].message.content
+                    llm_output = completion.choices[0].message.content
+                    result = {
+                        "summary": llm_output,
+                        "confidence": 100,
+                        "sources": [],
+                    }
 
                 except Exception as exc:
                     error = str(exc)
