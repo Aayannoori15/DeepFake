@@ -6,7 +6,7 @@ load_dotenv()
 
 def build_agent():
     return Agent(
-        model=Groq(id='openai/gpt-oss-120b'),
+        model=Groq(id='llama-3.3-70b-versatile'),
         markdown=True,
         instructions="You are a plagiarism and source tracing agent.,Search the web for the exact text or highly similar text.Return the most likely original source.Include URLs and confidence scores.,If no source is found, say so.",
         tools=[DuckDuckGoTools()]
