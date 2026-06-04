@@ -1,7 +1,8 @@
 from io import BytesIO
+import os
 from groq import Groq
 import torch
-from django.shortcuts import render,redirect 
+from django.shortcuts import render
 from PIL import Image
 from .forms import *
 from .services import (
@@ -14,6 +15,8 @@ from .services import (
 )
 from dotenv import load_dotenv
 load_dotenv()
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 def home(request):
     return render(
@@ -166,34 +169,54 @@ def Plagirism_report(request):
     )
         
 def Factchecker(request):
-    user_input=None 
-    LLM_output=None 
+    user_input = None
+    result = None
+    error = None
     form = Factcheckerform(request.POST or None)
+
     if request.method == 'POST':
         if form.is_valid():
             user_input = form.cleaned_data["text"]
             if len(user_input.strip()) < 10:
-                    error = "Please enter at least 10 characters."
-                    return redirect(request,'fact_check.html',{'error':error})
+                error = "Please enter at least 10 characters."
+            elif not GROQ_API_KEY:
+                error = "Groq API key not configured."
             else:
-                client = Groq(api_key=GROQ_API_KEY)
-                completion = client.chat.completions.create(
-                model="openai/gpt-oss-120b",
-                messages=[
-                {
-                    "role": "user",
-                    "content": f'do a fact check for this input :{user_input}'
+                try:
+                    client = Groq(api_key=GROQ_API_KEY)
+                    completion = client.chat.completions.create(
+                        model="openai/gpt-oss-120b",
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": f"Please fact-check the following statement:\n\n{user_input}",
+                            }
+                        ],
+                        temperature=0.02,
+                        max_completion_tokens=8192,
+                        top_p=1,
+                        reasoning_effort="medium",
+                        stop=None,
+                    )
+                    llm_output = completion.choices[0].message.content
+                    result = {
+                        "summary": llm_output,
+                        "confidence": 100,
+                        "sources": [],
+                    }
+                except Exception as exc:
+                    error = str(exc)
+        else:
+            error = "Invalid input. Please enter text to analyze."
 
-                }
-                ],
-                temperature=1,
-                max_completion_tokens=8192,
-                top_p=1,
-                reasoning_effort="medium",
-                stop=None
-                )
-                result=completion.choices[0].message.content
-                return render (request,'fact_check.html',{'result':result})
-    else: 
-        return render(request,'fact_check.html')
+    return render(
+        request,
+        'fact_check.html',
+        {
+            'form': form,
+            'result': result,
+            'error': error,
+            'user_input': user_input,
+        },
+    )
 
